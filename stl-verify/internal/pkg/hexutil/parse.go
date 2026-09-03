@@ -9,6 +9,16 @@ import (
 	"strings"
 )
 
+// EqualHash compares two block hashes case-insensitively, tolerating a
+// missing 0x prefix on either side. Ethereum hex hashes are
+// case-insensitive; Go string comparison is not.
+func EqualHash(a, b string) bool {
+	normalize := func(h string) string {
+		return strings.ToLower(strings.TrimPrefix(h, "0x"))
+	}
+	return normalize(a) == normalize(b)
+}
+
 // ParseInt64 parses a hex-encoded string to int64.
 // Handles both "0x" prefixed and non-prefixed hex strings.
 func ParseInt64(hexNum string) (int64, error) {

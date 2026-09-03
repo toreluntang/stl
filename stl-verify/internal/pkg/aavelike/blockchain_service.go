@@ -566,9 +566,18 @@ func (s *BlockchainService) BatchGetTokenMetadata(ctx context.Context, tokens ma
 
 	calls := make([]outbound.Call, 0, len(tokensToFetch)*3)
 	for _, token := range tokensToFetch {
-		decimalsData, _ := s.erc20ABI.Pack("decimals")
-		symbolData, _ := s.erc20ABI.Pack("symbol")
-		nameData, _ := s.erc20ABI.Pack("name")
+		decimalsData, err := s.erc20ABI.Pack("decimals")
+		if err != nil {
+			return nil, fmt.Errorf("pack decimals for token %s: %w", token.Hex(), err)
+		}
+		symbolData, err := s.erc20ABI.Pack("symbol")
+		if err != nil {
+			return nil, fmt.Errorf("pack symbol for token %s: %w", token.Hex(), err)
+		}
+		nameData, err := s.erc20ABI.Pack("name")
+		if err != nil {
+			return nil, fmt.Errorf("pack name for token %s: %w", token.Hex(), err)
+		}
 
 		calls = append(calls,
 			outbound.Call{Target: token, AllowFailure: true, CallData: decimalsData},

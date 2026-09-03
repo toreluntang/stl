@@ -17,7 +17,8 @@ type VatCaller interface {
 	ResolveIlks(ctx context.Context, vaults []common.Address, blockNumber *big.Int) (map[common.Address][32]byte, error)
 
 	// ReadDebts reads rate and art for each query in a single multicall at the
-	// given block. Individual vault failures are reported via DebtResult.Err
-	// rather than failing the entire batch.
+	// given block. A per-vault contract revert is reported via
+	// DebtResult.Reverted (skip-and-continue); any structural failure fails
+	// the entire batch with an error.
 	ReadDebts(ctx context.Context, queries []entity.DebtQuery, blockNumber *big.Int) ([]entity.DebtResult, error)
 }

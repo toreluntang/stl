@@ -74,6 +74,30 @@ func TestParseInt64_InvalidHex(t *testing.T) {
 	}
 }
 
+func TestEqualHash(t *testing.T) {
+	tests := []struct {
+		name  string
+		a, b  string
+		equal bool
+	}{
+		{"identical", "0xabc", "0xabc", true},
+		{"mixed case", "0xAbC", "0xaBc", true},
+		{"checksummed vs lower", "0xAbCDEF1234", "0xabcdef1234", true},
+		{"missing prefix tolerated", "abc", "0xABC", true},
+		{"different hashes", "0xabc", "0xabd", false},
+		{"different lengths", "0xabc", "0xabcd", false},
+		{"empty vs set", "", "0xabc", false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := EqualHash(tc.a, tc.b); got != tc.equal {
+				t.Errorf("EqualHash(%q, %q) = %v, want %v", tc.a, tc.b, got, tc.equal)
+			}
+		})
+	}
+}
+
 func TestParseInt64_EmptyString(t *testing.T) {
 	_, err := ParseInt64("")
 	if err == nil {

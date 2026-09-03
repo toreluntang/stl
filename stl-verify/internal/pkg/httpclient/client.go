@@ -4,6 +4,7 @@ package httpclient
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -176,18 +177,10 @@ func WrapNonRetryable(err error) error {
 	return &NonRetryableError{err: err}
 }
 
-// isNonRetryable checks if an error is non-retryable using errors.As pattern.
+// isNonRetryable checks if an error is non-retryable using errors.As, which
+// traverses both Unwrap() error and Unwrap() []error chains (e.g.
+// errors.Join). A NonRetryableError nested anywhere in a joined error must
+// not be retried.
 func isNonRetryable(err error, target **NonRetryableError) bool {
-	for err != nil {
-		if e, ok := err.(*NonRetryableError); ok {
-			*target = e
-			return true
-		}
-		if u, ok := err.(interface{ Unwrap() error }); ok {
-			err = u.Unwrap()
-		} else {
-			break
-		}
-	}
-	return false
+	return errors.As(err, target)
 }

@@ -1021,6 +1021,50 @@ func TestVerifyBoundaryBlocks_DetectsUncleReorg(t *testing.T) {
 	}
 }
 
+func TestVerifyBoundaryBlocks_MixedCaseHashIsNotStale(t *testing.T) {
+	// A node returning the same hash in different hex case must not orphan
+	// the canonical block (F05.13: the comparison is case-insensitive).
+	repo := memory.NewBlockStateRepository()
+	client := newMockClient()
+	cache := memory.NewBlockCache()
+	sink := newNoOpEventSink()
+
+	cfg := BackfillConfigDefaults()
+	cfg.ChainID = 1
+	cfg.BoundaryCheckDepth = 5
+
+	svc, err := NewBackfillService(cfg, client, repo, cache, sink)
+	if err != nil {
+		t.Fatalf("Failed to create service: %v", err)
+	}
+
+	ctx := context.Background()
+
+	stored := outbound.BlockState{
+		Number:         100,
+		Hash:           "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+		ParentHash:     "0xHASH_99",
+		Version:        0,
+		BlockTimestamp: time.Now().Unix(),
+	}
+	if _, err := repo.SaveBlock(ctx, stored); err != nil {
+		t.Fatalf("failed to save block: %v", err)
+	}
+
+	// Canonical RPC returns the identical hash in upper-case hex.
+	client.SetBlockHeader(100,
+		"0xABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890",
+		"0xHASH_99")
+
+	staleBlocks, err := svc.verifyBoundaryBlocks(ctx)
+	if err != nil {
+		t.Fatalf("verifyBoundaryBlocks failed: %v", err)
+	}
+	if len(staleBlocks) != 0 {
+		t.Errorf("expected no stale blocks for case-only hash difference, got %v", staleBlocks)
+	}
+}
+
 func TestVerifyBoundaryBlocks_RecoverFromDeepReorgCorrected(t *testing.T) {
 	ctx := context.Background()
 	client := newMockClient()

@@ -781,9 +781,10 @@ func (s *BackfillService) verifyBoundaryBlocks(ctx context.Context) ([]outbound.
 			continue
 		}
 
-		// Compare Hash: Canonical (RPC) vs Database
-		// Note: Case-insensitive comparison is safer for hex strings
-		if header.Hash != dbBlock.Hash {
+		// Compare Hash: Canonical (RPC) vs Database. Hashes are hex and
+		// therefore case-insensitive — compare accordingly so a node
+		// returning mixed-case hex cannot orphan a canonical block.
+		if !hexutil.EqualHash(header.Hash, dbBlock.Hash) {
 			// Block hash doesn't match canonical chain - it's stale!
 			s.logger.Info("detected stale block (hash mismatch with canonical chain)",
 				"block", dbBlock.Number,
