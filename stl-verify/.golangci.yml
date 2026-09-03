@@ -1,0 +1,99 @@
+# C12 lint-hardening baseline (deterministic gates slice).
+#
+# Ratchet posture: the tree violates these rules today (ports import pgx,
+# services import adapters/pgx, entity imports go-ethereum, long test
+# functions). The full `golangci-lint run` therefore reports pre-existing
+# issues; the CI gate only fails on NEW violations via an explicit
+# `--new-from-rev <base>` flag (see "Ratchet" below). Tightening path:
+# burn down the backlog, then drop the flag so the full run is the gate.
+
+version: "2"
+
+run:
+  # F11.4: integration-tagged files (46 files, 10% of the tree, most of the
+  # postgres/migrator test surface) are invisible to the default gate
+  # without this.
+  build-tags:
+    - integration
+  timeout: 10m
+
+linters:
+  # Default (`standard`) linters stay on (errcheck, govet, ineffassign,
+  # staticcheck, unused). These four are the C12 additions:
+  enable:
+    # F11.3: function-length backstop. 80 lines / 50 statements, tests
+    # included: the 1,854-line TestStartAndProcessMessages is exactly
+    # what this must prevent more of.
+    - funlen
+    # F11.3: cognitive-complexity backstop.
+    - gocognit
+    # Hexagonal boundaries: domain has no dependencies; services may not
+    # import adapters; ports may not name drivers or layers.
+    - depguard
+    # Keep the 4 existing //nolint directives honest (unused or
+    # unexplained suppressions fail once enabled linters change).
+    - nolintlint
+  settings:
+    funlen:
+      lines: 80
+      statements: 50
+    gocognit:
+      min-complexity: 30
+    depguard:
+      rules:
+        # Domain has no dependencies: internal/domain/entity is stdlib-only.
+        domain-entity-stdlib-only:
+          # NOTE: depguard matches `files` against ABSOLUTE file paths, so
+          # every pattern needs a `**/` prefix; `$all`/`$test` sentinels only
+          # work as the whole value, never combined with a path prefix.
+          # A trailing `/**` needs at least one directory level, so list
+          # both the direct-children and the recursive form.
+          files:
+            - '**/internal/domain/entity/*.go'
+            - '**/internal/domain/entity/**/*.go'
+          allow:
+            - $gostd
+        # Services must not import adapters (wire in cmd instead) or pgx
+        # (use ports/outbound.Tx via TxManager).
+        services-no-adapters-no-pgx:
+          files:
+            - '**/internal/services/*.go'
+            - '**/internal/services/**/*.go'
+          deny:
+            - pkg: github.com/archon-research/stl/stl-verify/internal/adapters
+              desc: services must not import adapters (hexagonal boundary; compose in cmd instead)
+            - pkg: github.com/jackc/pgx
+              desc: services must not import pgx directly (use ports/outbound.Tx via TxManager)
+        # Ports must not name the pgx driver (opaque outbound.Tx instead)
+        # and must not import adapters or services.
+        ports-no-driver-no-layers:
+          files:
+            - '**/internal/ports/*.go'
+            - '**/internal/ports/**/*.go'
+          deny:
+            - pkg: github.com/jackc/pgx
+              desc: ports must not name the pgx driver (opaque outbound.Tx instead)
+            - pkg: github.com/archon-research/stl/stl-verify/internal/adapters
+              desc: ports must not import adapters
+            - pkg: github.com/archon-research/stl/stl-verify/internal/services
+              desc: ports must not import services
+
+# Ratchet: NO `new-from-rev` default is set here on purpose. An unresolvable
+# rev does NOT fail safe: golangci-lint warns ("Can't process results by diff
+# processor") and falls back to reporting ALL issues, so a hardcoded rev that
+# is missing from a shallow CI checkout would red the gate on the backlog.
+# The gate (wired by the C13 worker in `make ci-checks`) passes the base
+# explicitly, where the ref is guaranteed present:
+#
+#   $(GOBIN)/golangci-lint run --new-from-rev=$(GOLANGCI_BASE) ./...
+#
+# with GOLANGCI_BASE defaulting to the PR base (e.g. origin/main) and the
+# checkout using fetch-depth: 0. If CI ever moves to golangci-lint-action,
+# the equivalent toggle is `only-new-issues: true` (also with fetch-depth: 0).
+# Local verification:
+#   full run (reports backlog):  golangci-lint run ./...
+#   new-issues gate (must be green on a clean diff):
+#                                golangci-lint run --new-from-rev=fork/main ./...
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

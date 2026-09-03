@@ -1,0 +1,26 @@
+# pairing baseline (F11.11 ratchet) — grandfathered foo_test.go files with no
+# sibling foo.go, as of the C12 lint-baseline branch.
+#
+# This file ONLY EVER SHRINKS. When a listed test is paired with its source
+# file (move/rename/split per AGENTS.md: "the source split is missing" or
+# "the tests are filed wrong"), delete its line here in the same PR.
+# Never add lines: ci/check-pairing.sh fails any unpaired test file NOT
+# listed here, and warns on stale entries so they get removed.
+#
+# Guardrail/convention tests (*_guardrail_test.go, telemetry_chain_test.go)
+# stay here until they are consolidated into the sanctioned suffixes or a
+# repo-wide guardrail test (F11.11 groups 1-2).
+internal/adapters/outbound/alchemy/client_null_result_test.go
+internal/adapters/outbound/alchemy/proxy_tls_test.go
+internal/adapters/outbound/alchemy/telemetry_chain_test.go
+internal/adapters/outbound/postgres/blockstate_test.go
+internal/adapters/outbound/postgres/repository_validation_test.go
+internal/pkg/axis_synome_contract/loader_helpers_test.go
+internal/pkg/blockchain/protocols_slug_test.go
+internal/pkg/telemetry/helpers_test.go
+internal/pkg/telemetry/metrics_chain_test.go
+internal/services/allocation_tracker/entries_chain_test.go
+internal/services/allocation_tracker/guardrails_test.go
+internal/services/allocation_tracker/loaders_test.go
+internal/services/morpho_indexer/telemetry_chain_test.go
+internal/services/oracle_price_worker/telemetry_chain_test.go
