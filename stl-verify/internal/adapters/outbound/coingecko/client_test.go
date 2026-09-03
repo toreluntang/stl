@@ -199,6 +199,39 @@ func TestClient_GetHistoricalData(t *testing.T) {
 			serverStatus:   http.StatusNotFound,
 			wantErr:        true,
 		},
+		{
+			name:    "malformed price row fails the call",
+			assetID: "ethereum",
+			serverResponse: `{
+				"prices": [[1704067200000, 3456.78], [1704070800000]],
+				"market_caps": [[1704067200000, 415123456789]],
+				"total_volumes": [[1704067200000, 12345678901]]
+			}`,
+			serverStatus: http.StatusOK,
+			wantErr:      true,
+		},
+		{
+			name:    "malformed volume row fails the call",
+			assetID: "ethereum",
+			serverResponse: `{
+				"prices": [[1704067200000, 3456.78]],
+				"market_caps": [[1704067200000, 415123456789]],
+				"total_volumes": [[1704067200000]]
+			}`,
+			serverStatus: http.StatusOK,
+			wantErr:      true,
+		},
+		{
+			name:    "malformed market cap row fails the call",
+			assetID: "ethereum",
+			serverResponse: `{
+				"prices": [[1704067200000, 3456.78]],
+				"market_caps": [[]],
+				"total_volumes": [[1704067200000, 12345678901]]
+			}`,
+			serverStatus: http.StatusOK,
+			wantErr:      true,
+		},
 	}
 
 	for _, tt := range tests {

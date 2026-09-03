@@ -138,9 +138,9 @@ func (f *fakeVatCaller) setDebtError(vault common.Address, err error) {
 }
 
 // setDebtReverted mirrors the production VatCaller's per-call Success:false
-// path: ReadDebts returns a DebtResult with Reverted=true and no Err. Use
-// this for "contract said no" simulation; use setDebtError for structural
-// failure simulation (ABI decode errors, etc.).
+// path: ReadDebts returns a DebtResult with Reverted=true. Use this for
+// "contract said no" simulation; use setDebtError for structural failure
+// simulation (ABI decode errors, etc.), which fails the whole batch.
 func (f *fakeVatCaller) setDebtReverted(vault common.Address) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -185,9 +185,10 @@ func (f *fakeVatCaller) ReadDebts(_ context.Context, queries []entity.DebtQuery,
 			results[i].Reverted = true
 			continue
 		}
+		// Mirror the production contract: a structural failure fails the
+		// whole batch with an error, never an in-band per-vault Err.
 		if err, ok := f.debtErrByVault[q.VaultAddress]; ok {
-			results[i].Err = err
-			continue
+			return nil, err
 		}
 
 		results[i].Rate = new(big.Int).Set(f.rate)
@@ -510,8 +511,8 @@ func TestSync_WritesSnapshotPerPrime(t *testing.T) {
 // TestSync_PartialRevert_OtherPrimesStillSaved verifies the
 // AllowFailure-compatible revert path: if one vault's debt call reverts
 // (the contract's "no data this block" answer), that prime is skipped
-// and the remaining primes are still snapshotted. Structural errors
-// from the producer propagate via DebtResult.Err and are covered by
+// and the remaining primes are still snapshotted. Structural failures
+// fail the whole ReadDebts batch and are covered by
 // TestSyncAll_ErrorsOnStructuralFailure.
 func TestSync_PartialRevert_OtherPrimesStillSaved(t *testing.T) {
 	spark := entity.Prime{ID: 1, Name: "spark", VaultAddress: common.HexToAddress("0x691A6c29e9e96Dd897718305427Ad5D534db16BA")}
@@ -560,11 +561,10 @@ found:
 
 // TestSyncAll_ContractRevertFromRealVatCaller_Skipped exercises the exact
 // shape of error the production VatCaller produces for a per-call
-// Success:false: a plain `errors.New("vat.ilks call failed")` with no
-// rpc.Error underneath. The classification at this layer must come from
-// DebtResult.Reverted, not from re-classifying r.Err — otherwise a
-// legitimate contract revert NACKs/DLQs the message. This test is the
-// regression guard for that bug (CodeRabbit P2 on PR #251).
+// Success:false: DebtResult.Reverted. The classification at this layer must
+// come from Reverted — otherwise a legitimate contract revert NACKs/DLQs
+// the message. This test is the regression guard for that bug
+// (CodeRabbit P2 on PR #251).
 func TestSyncAll_ContractRevertFromRealVatCaller_Skipped(t *testing.T) {
 	spark := entity.Prime{ID: 1, Name: "spark", VaultAddress: common.HexToAddress("0x691A6c29e9e96Dd897718305427Ad5D534db16BA")}
 	grove := entity.Prime{ID: 2, Name: "grove", VaultAddress: common.HexToAddress("0xD5Bf3F08Ac13f4A2e2b1A70741d5c94E2b4Eb6E0")}
@@ -573,7 +573,7 @@ func TestSyncAll_ContractRevertFromRealVatCaller_Skipped(t *testing.T) {
 	caller.setIlk(spark.VaultAddress, ilkFrom("ALLOCATOR-SPARK-A"))
 	caller.setIlk(grove.VaultAddress, ilkFrom("ALLOCATOR-GROVE-A"))
 	// Mirror the real VatCaller: per-call revert is signalled via
-	// DebtResult.Reverted, not via r.Err carrying an rpc.Error.
+	// DebtResult.Reverted.
 	caller.setDebtReverted(grove.VaultAddress)
 
 	events := makeBlockEvents(testBlockNum, 3)
@@ -619,8 +619,8 @@ savedSpark:
 
 // TestSyncAll_ErrorsOnStructuralFailure codifies that a non-revert error
 // from VatCaller (e.g. ABI decode failure, "missing multicall results")
-// must propagate out of syncAll so the SQS message NACKs and an operator
-// can investigate the structural problem.
+// fails the whole ReadDebts batch so syncAll errors and the SQS message
+// NACKs for operator investigation.
 func TestSyncAll_ErrorsOnStructuralFailure(t *testing.T) {
 	spark := entity.Prime{ID: 1, Name: "spark", VaultAddress: common.HexToAddress("0x691A6c29e9e96Dd897718305427Ad5D534db16BA")}
 	grove := entity.Prime{ID: 2, Name: "grove", VaultAddress: common.HexToAddress("0xD5Bf3F08Ac13f4A2e2b1A70741d5c94E2b4Eb6E0")}
@@ -628,7 +628,7 @@ func TestSyncAll_ErrorsOnStructuralFailure(t *testing.T) {
 	caller := newFakeVatCaller()
 	caller.setIlk(spark.VaultAddress, ilkFrom("ALLOCATOR-SPARK-A"))
 	caller.setIlk(grove.VaultAddress, ilkFrom("ALLOCATOR-GROVE-A"))
-	// Non-revert structural failure surfaced via DebtResult.Err — syncAll
+	// Non-revert structural failure fails the ReadDebts batch — syncAll
 	// must propagate it as a top-level error, NACKing the SQS message.
 	caller.setDebtError(spark.VaultAddress, errors.New("unpack ilks: ABI mismatch"))
 

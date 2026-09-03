@@ -884,6 +884,40 @@ func TestBatchGetTokenMetadata_DoesNotCacheWhenAnySubCallFails(t *testing.T) {
 	}
 }
 
+// TestBatchGetTokenMetadata_PackErrorIsPropagated verifies that an ABI
+// packing failure (e.g. a method missing from the loaded ABI) fails the call
+// instead of multicalling with nil calldata.
+func TestBatchGetTokenMetadata_PackErrorIsPropagated(t *testing.T) {
+	partialABI, err := abi.JSON(strings.NewReader(
+		`[{"type":"function","name":"decimals","inputs":[],"outputs":[{"type":"uint8"}]}]`))
+	if err != nil {
+		t.Fatalf("failed to parse partial ABI: %v", err)
+	}
+
+	mock := testutil.NewMockMulticaller()
+	mock.ExecuteFn = func(_ context.Context, _ []outbound.Call, _ *big.Int) ([]outbound.Result, error) {
+		t.Error("multicall must not execute when packing fails")
+		return nil, nil
+	}
+
+	svc := &BlockchainService{
+		logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
+		metadataCache:   make(map[common.Address]TokenMetadata),
+		erc20ABI:        &partialABI,
+		multicallClient: mock,
+		protocolVersion: "sparklend",
+	}
+
+	token := common.HexToAddress("0xaaAAAAaaaAAAAaaAaaAAaaAAaaAaAAAAAaAaaaAA")
+	_, err = svc.BatchGetTokenMetadata(context.Background(), map[common.Address]bool{token: true}, big.NewInt(1))
+	if err == nil {
+		t.Fatal("expected packing error, got nil")
+	}
+	if !strings.Contains(err.Error(), token.Hex()) {
+		t.Errorf("error should name the token %s, got: %s", token.Hex(), err.Error())
+	}
+}
+
 // TestBatchGetTokenMetadata_AcceptsBytes32SymbolAndName verifies that
 // legacy ERC20s like MKR — which return `bytes32` for symbol() and name()
 // instead of the modern `string` — are tracked correctly. Pre-fix this

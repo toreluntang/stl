@@ -106,8 +106,11 @@ func (c *VatCaller) ResolveIlks(ctx context.Context, vaults []common.Address, bl
 }
 
 // ReadDebts reads rate (via vat.ilks) and art (via vat.urns) for each query
-// in a single multicall at the given block. Per-vault failures are reported
-// via DebtResult.Err rather than failing the entire batch.
+// in a single multicall at the given block. A per-vault contract revert
+// (Success:false) is reported via DebtResult.Reverted so the consumer can
+// skip-and-continue; every structural failure (missing results, unpack or
+// type errors) fails the whole batch with an error so the block NACKs
+// instead of persisting holes.
 //
 // Call layout per query: [ilks(ilk), urns(ilk, vault)] — 2 calls per query.
 func (c *VatCaller) ReadDebts(ctx context.Context, queries []entity.DebtQuery, blockNumber *big.Int) ([]entity.DebtResult, error) {
@@ -148,8 +151,7 @@ func (c *VatCaller) ReadDebts(ctx context.Context, queries []entity.DebtQuery, b
 		results[i].VaultAddress = q.VaultAddress
 
 		if ilksIdx >= len(mcResults) || urnsIdx >= len(mcResults) {
-			results[i].Err = fmt.Errorf("missing multicall results")
-			continue
+			return nil, fmt.Errorf("missing multicall results for vault %s", q.VaultAddress)
 		}
 
 		// Per-call Success:false means the contract reverted (post-VEC-188
@@ -164,25 +166,21 @@ func (c *VatCaller) ReadDebts(ctx context.Context, queries []entity.DebtQuery, b
 		// Parse rate from ilks(ilk) → [Art, rate, spot, line, dust]
 		ilksOut, err := c.vatABI.Unpack("ilks", mcResults[ilksIdx].ReturnData)
 		if err != nil {
-			results[i].Err = fmt.Errorf("unpack ilks: %w", err)
-			continue
+			return nil, fmt.Errorf("unpack ilks for vault %s: %w", q.VaultAddress, err)
 		}
 		rate, ok := ilksOut[1].(*big.Int)
 		if !ok {
-			results[i].Err = fmt.Errorf("unexpected type for rate: %T", ilksOut[1])
-			continue
+			return nil, fmt.Errorf("unexpected type for rate for vault %s: %T", q.VaultAddress, ilksOut[1])
 		}
 
 		// Parse art from urns(ilk, vault) → [ink, art]
 		urnsOut, err := c.vatABI.Unpack("urns", mcResults[urnsIdx].ReturnData)
 		if err != nil {
-			results[i].Err = fmt.Errorf("unpack urns: %w", err)
-			continue
+			return nil, fmt.Errorf("unpack urns for vault %s: %w", q.VaultAddress, err)
 		}
 		art, ok := urnsOut[1].(*big.Int)
 		if !ok {
-			results[i].Err = fmt.Errorf("unexpected type for art: %T", urnsOut[1])
-			continue
+			return nil, fmt.Errorf("unexpected type for art for vault %s: %T", q.VaultAddress, urnsOut[1])
 		}
 
 		results[i].Rate = rate

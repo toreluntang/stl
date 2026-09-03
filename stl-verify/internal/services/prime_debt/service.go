@@ -275,27 +275,14 @@ func (s *VaultDebtService) syncAll(ctx context.Context, blockNumber int64, block
 		// Reverted = the contract returned `Success: false` for at least
 		// one of its per-vault calls. Under AllowFailure: true that's a
 		// legitimate "no debt this block" signal — skip and continue.
+		// (Structural failures never reach this loop: ReadDebts fails the
+		// whole batch with an error so the SQS message NACKs.)
 		if r.Reverted {
 			s.logger.Warn("vault debt call reverted (contract-level); skipping",
 				"prime", prime.Name,
 				"vault", prime.VaultAddress,
 			)
 			continue
-		}
-		// Err = a non-revert structural failure from the producer (ABI
-		// decode, unexpected type, missing multicall result). Surface it
-		// as a hard error so the SQS message NACKs and an operator can
-		// investigate.
-		//
-		// Fail-fast asymmetry: returning on the FIRST hard error throws
-		// away results we already received for primes later in the slice
-		// — they'll be re-read on SQS retry. The wasted work scales
-		// linearly with the prime count; at small N the simpler
-		// return-on-first wins. If this slice ever grows enough that
-		// re-reads become expensive, accumulate-then-return is the next
-		// form.
-		if r.Err != nil {
-			return fmt.Errorf("prime %s: error reading debt: %w", prime.Name, r.Err)
 		}
 
 		debtWad := entity.ComputeDebtWad(r.Art, r.Rate)

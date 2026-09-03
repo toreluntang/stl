@@ -77,7 +77,6 @@ func ClientConfigDefaults() ClientConfig {
 type Client struct {
 	config     ClientConfig
 	httpClient *httpclient.Client
-	logger     *slog.Logger
 	apiKey     string
 }
 
@@ -110,7 +109,6 @@ func NewClient(config ClientConfig) (*Client, error) {
 	return &Client{
 		config:     config,
 		httpClient: httpclient.NewClient(httpCfg, logger, coinGeckoErrorParser),
-		logger:     logger,
 		apiKey:     config.APIKey,
 	}, nil
 }
@@ -211,6 +209,8 @@ func (c *Client) getCurrentPricesBatch(ctx context.Context, assetIDs []string) (
 // Uses the /coins/{id}/market_chart/range endpoint.
 // Note: CoinGecko returns hourly data for ranges up to 90 days, daily for larger ranges.
 // For best results, fetch in 30-day chunks.
+// A malformed row fails the whole call: returning a silently short series
+// would feed holes into the price history the risk models read.
 func (c *Client) GetHistoricalData(ctx context.Context, assetID string, from, to time.Time) (*outbound.HistoricalData, error) {
 	endpoint := fmt.Sprintf("%s/coins/%s/market_chart/range", c.config.BaseURL, assetID)
 	params := url.Values{
@@ -231,37 +231,34 @@ func (c *Client) GetHistoricalData(ctx context.Context, assetID string, from, to
 		MarketCaps:    make([]outbound.MarketCapPoint, 0, len(response.MarketCaps)),
 	}
 
-	for _, p := range response.Prices {
-		if len(p) >= 2 {
-			result.Prices = append(result.Prices, outbound.PricePoint{
-				Timestamp: time.UnixMilli(int64(p[0])),
-				PriceUSD:  p[1],
-			})
-		} else {
-			c.logger.Warn("malformed price data point from CoinGecko API", "assetID", assetID, "dataPoint", p)
+	for i, p := range response.Prices {
+		if len(p) < 2 {
+			return nil, fmt.Errorf("malformed price data point from CoinGecko API: asset %s index %d", assetID, i)
 		}
+		result.Prices = append(result.Prices, outbound.PricePoint{
+			Timestamp: time.UnixMilli(int64(p[0])),
+			PriceUSD:  p[1],
+		})
 	}
 
-	for _, v := range response.TotalVolumes {
-		if len(v) >= 2 {
-			result.Volumes = append(result.Volumes, outbound.VolumePoint{
-				Timestamp: time.UnixMilli(int64(v[0])),
-				VolumeUSD: v[1],
-			})
-		} else {
-			c.logger.Warn("malformed volume data point from CoinGecko API", "assetID", assetID, "dataPoint", v)
+	for i, v := range response.TotalVolumes {
+		if len(v) < 2 {
+			return nil, fmt.Errorf("malformed volume data point from CoinGecko API: asset %s index %d", assetID, i)
 		}
+		result.Volumes = append(result.Volumes, outbound.VolumePoint{
+			Timestamp: time.UnixMilli(int64(v[0])),
+			VolumeUSD: v[1],
+		})
 	}
 
-	for _, m := range response.MarketCaps {
-		if len(m) >= 2 {
-			result.MarketCaps = append(result.MarketCaps, outbound.MarketCapPoint{
-				Timestamp:    time.UnixMilli(int64(m[0])),
-				MarketCapUSD: m[1],
-			})
-		} else {
-			c.logger.Warn("malformed market cap data point from CoinGecko API", "assetID", assetID, "dataPoint", m)
+	for i, m := range response.MarketCaps {
+		if len(m) < 2 {
+			return nil, fmt.Errorf("malformed market cap data point from CoinGecko API: asset %s index %d", assetID, i)
 		}
+		result.MarketCaps = append(result.MarketCaps, outbound.MarketCapPoint{
+			Timestamp:    time.UnixMilli(int64(m[0])),
+			MarketCapUSD: m[1],
+		})
 	}
 
 	return result, nil
