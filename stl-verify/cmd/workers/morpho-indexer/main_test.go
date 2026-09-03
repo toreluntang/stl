@@ -25,6 +25,7 @@ func TestParseConfig(t *testing.T) {
 				"ALCHEMY_HTTP_URL": "https://eth.example.com",
 				"S3_BUCKET":        "my-bucket",
 				"DEPLOY_ENV":       "sentinelstaging",
+				"CHAIN_ID":         "1",
 			},
 			wantCfg: cliConfig{
 				queueURL:          "https://sqs.us-east-1.amazonaws.com/123/my-queue",
@@ -47,6 +48,7 @@ func TestParseConfig(t *testing.T) {
 				"ALCHEMY_API_KEY":   "test-key",
 				"S3_BUCKET":         "my-bucket",
 				"DEPLOY_ENV":        "sentinelstaging",
+				"CHAIN_ID":          "1",
 			},
 			wantCfg: cliConfig{
 				queueURL:          "https://sqs.us-east-1.amazonaws.com/123/env-queue",
@@ -69,6 +71,7 @@ func TestParseConfig(t *testing.T) {
 				"ALCHEMY_API_KEY": "test-key",
 				"S3_BUCKET":       "my-bucket",
 				"DEPLOY_ENV":      "sentinelstaging",
+				"CHAIN_ID":        "1",
 			},
 			wantCfg: cliConfig{
 				queueURL:          "https://sqs.us-east-1.amazonaws.com/123/q",
@@ -91,6 +94,7 @@ func TestParseConfig(t *testing.T) {
 				"ALCHEMY_API_KEY": "test-key",
 				"S3_BUCKET":       "my-bucket",
 				"DEPLOY_ENV":      "sentinelstaging",
+				"CHAIN_ID":        "1",
 			},
 			wantCfg: cliConfig{
 				queueURL:          "https://sqs.us-east-1.amazonaws.com/123/q",
@@ -131,7 +135,7 @@ func TestParseConfig(t *testing.T) {
 		{
 			name:      "missing S3_BUCKET",
 			args:      []string{"-queue", "https://sqs.us-east-1.amazonaws.com/123/q", "-db", "postgres://localhost/db", "-redis", "localhost:6379"},
-			envVars:   map[string]string{"ALCHEMY_API_KEY": "test-key"},
+			envVars:   map[string]string{"ALCHEMY_API_KEY": "test-key", "CHAIN_ID": "1"},
 			wantError: "S3_BUCKET environment variable is required",
 		},
 		{
@@ -140,6 +144,7 @@ func TestParseConfig(t *testing.T) {
 			envVars: map[string]string{
 				"ALCHEMY_API_KEY": "test-key",
 				"S3_BUCKET":       "my-bucket",
+				"CHAIN_ID":        "1",
 			},
 			wantError: "DEPLOY_ENV environment variable is required",
 		},
@@ -162,6 +167,7 @@ func TestParseConfig(t *testing.T) {
 				"ALCHEMY_API_KEY":   "test-key",
 				"S3_BUCKET":         "my-bucket",
 				"DEPLOY_ENV":        "sentinelstaging",
+				"CHAIN_ID":          "1",
 			},
 			wantCfg: cliConfig{
 				queueURL:          "https://sqs.us-east-1.amazonaws.com/123/cli-queue",
@@ -199,6 +205,14 @@ func TestParseConfig(t *testing.T) {
 			},
 		},
 		{
+			name: "missing CHAIN_ID",
+			args: []string{"-queue", "https://sqs.us-east-1.amazonaws.com/123/q", "-db", "postgres://localhost/db", "-redis", "localhost:6379"},
+			envVars: map[string]string{
+				"ALCHEMY_API_KEY": "test-key",
+			},
+			wantError: "CHAIN_ID environment variable is required",
+		},
+		{
 			name: "invalid CHAIN_ID",
 			args: []string{"-queue", "https://sqs.us-east-1.amazonaws.com/123/q", "-db", "postgres://localhost/db", "-redis", "localhost:6379"},
 			envVars: map[string]string{
@@ -215,6 +229,7 @@ func TestParseConfig(t *testing.T) {
 				"SQS_WAIT_TIME":   "5",
 				"S3_BUCKET":       "my-bucket",
 				"DEPLOY_ENV":      "sentinelstaging",
+				"CHAIN_ID":        "1",
 			},
 			wantCfg: cliConfig{
 				queueURL:          "https://sqs.us-east-1.amazonaws.com/123/q",
@@ -246,6 +261,7 @@ func TestParseConfig(t *testing.T) {
 				"SQS_VISIBILITY_TIMEOUT": "60",
 				"S3_BUCKET":              "my-bucket",
 				"DEPLOY_ENV":             "sentinelstaging",
+				"CHAIN_ID":               "1",
 			},
 			wantCfg: cliConfig{
 				queueURL:          "https://sqs.us-east-1.amazonaws.com/123/q",
@@ -281,6 +297,7 @@ func TestParseConfig(t *testing.T) {
 				"ALCHEMY_API_KEY": "test-key",
 				"S3_BUCKET":       "my-bucket",
 				"DEPLOY_ENV":      "sentinelstaging",
+				"CHAIN_ID":        "1",
 			},
 			wantCfg: cliConfig{
 				queueURL:          "https://sqs.us-east-1.amazonaws.com/123/q",

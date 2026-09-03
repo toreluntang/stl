@@ -3,12 +3,12 @@ package sqsutil
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
 	"time"
 
+	"github.com/archon-research/stl/stl-verify/internal/common/blockevent"
 	"github.com/archon-research/stl/stl-verify/internal/ports/outbound"
 )
 
@@ -79,12 +79,15 @@ func ProcessMessages(
 
 	var errs []error
 	for _, msg := range messages {
-		var event outbound.BlockEvent
-		if err := json.Unmarshal([]byte(msg.Body), &event); err != nil {
-			cfg.Logger.Error("failed to parse block event",
+		// Strict decode: an SNS envelope or zero-event is a parse failure,
+		// not a foreign-chain verdict. Leave it for redelivery (→ DLQ via
+		// redrive) instead of deleting it.
+		event, err := blockevent.Decode([]byte(msg.Body))
+		if err != nil {
+			cfg.Logger.Error("failed to decode block event",
 				"messageID", msg.MessageID,
 				"error", err)
-			errs = append(errs, fmt.Errorf("parsing message %s: %w", msg.MessageID, err))
+			errs = append(errs, fmt.Errorf("decoding message %s: %w", msg.MessageID, err))
 			continue
 		}
 

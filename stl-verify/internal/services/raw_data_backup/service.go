@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/archon-research/stl/stl-verify/internal/common/blockevent"
 	"github.com/archon-research/stl/stl-verify/internal/pkg/partition"
 	"github.com/archon-research/stl/stl-verify/internal/pkg/retry"
 	"github.com/archon-research/stl/stl-verify/internal/pkg/rpcutil"
@@ -384,9 +385,9 @@ func (s *Service) recordProcessed(ctx context.Context, status string) {
 // chain-ID mismatch is permanent: redelivery cannot fix it, so it is routed to
 // the DLQ.
 func (s *Service) parseEvent(msg outbound.SQSMessage) (outbound.BlockEvent, error) {
-	var event outbound.BlockEvent
-	if err := json.Unmarshal([]byte(msg.Body), &event); err != nil {
-		return outbound.BlockEvent{}, fmt.Errorf("failed to parse block event: %w: %w", err, ErrPermanent)
+	event, err := blockevent.Decode([]byte(msg.Body))
+	if err != nil {
+		return outbound.BlockEvent{}, fmt.Errorf("failed to decode block event: %w: %w", err, ErrPermanent)
 	}
 	if event.ChainID != s.config.ChainID {
 		return outbound.BlockEvent{}, fmt.Errorf("chain ID mismatch: event has %d, expected %d: %w", event.ChainID, s.config.ChainID, ErrPermanent)

@@ -1186,7 +1186,7 @@ func TestProcessMessage_InvalidJSON(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for invalid JSON")
 	}
-	if !strings.Contains(err.Error(), "failed to parse block event") {
+	if !strings.Contains(err.Error(), "failed to decode block event") {
 		t.Errorf("unexpected error message: %v", err)
 	}
 }
