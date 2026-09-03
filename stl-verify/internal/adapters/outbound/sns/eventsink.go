@@ -23,7 +23,7 @@
 //   - chainId: The blockchain chain ID as a string
 //   - blockNumber: The block number as a string
 //
-// For testing, use the memory.EventSink adapter instead.
+// For testing, use the testutil/memory.EventSink fake instead.
 package sns
 
 import (

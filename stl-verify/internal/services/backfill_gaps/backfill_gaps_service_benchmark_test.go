@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/archon-research/stl/stl-verify/internal/adapters/outbound/memory"
 	"github.com/archon-research/stl/stl-verify/internal/ports/outbound"
+	"github.com/archon-research/stl/stl-verify/internal/testutil/memory"
 )
 
 // benchmarkBlockchainClient provides predictable block data for benchmarking.

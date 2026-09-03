@@ -6,8 +6,8 @@ import (
 
 	"github.com/archon-research/stl/stl-verify/internal/domain/entity"
 	"github.com/archon-research/stl/stl-verify/internal/pkg/blockchain/abis"
-	"github.com/archon-research/stl/stl-verify/internal/pkg/testutils"
 	"github.com/archon-research/stl/stl-verify/internal/services/shared"
+	"github.com/archon-research/stl/stl-verify/internal/testutil"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -266,9 +266,9 @@ func TestExtractMorphoBlueEvent_AccrueInterest(t *testing.T) {
 
 	// Pack non-indexed data: prevBorrowRate=1000, interest=500, feeShares=10
 	data, err := accrueEvent.Inputs.NonIndexed().Pack(
-		testutils.BigFromStr(t, "1000"),
-		testutils.BigFromStr(t, "500"),
-		testutils.BigFromStr(t, "10"),
+		testutil.BigFromStr(t, "1000"),
+		testutil.BigFromStr(t, "500"),
+		testutil.BigFromStr(t, "10"),
 	)
 	if err != nil {
 		t.Fatalf("packing data: %v", err)
@@ -315,7 +315,7 @@ func TestExtractMorphoBlueEvent_SetFee(t *testing.T) {
 	setFeeEvent := e.morphoBlueABI.Events["SetFee"]
 	marketID := common.HexToHash("0xb323495f7e4148be5643a4ea4a8221eef163e4bccfdedc2a6f4696baacbc86cc")
 
-	data, err := setFeeEvent.Inputs.NonIndexed().Pack(testutils.BigFromStr(t, "100000000000000000"))
+	data, err := setFeeEvent.Inputs.NonIndexed().Pack(testutil.BigFromStr(t, "100000000000000000"))
 	if err != nil {
 		t.Fatalf("packing data: %v", err)
 	}
@@ -353,7 +353,7 @@ func TestExtractMetaMorphoEvent_Transfer(t *testing.T) {
 	from := common.HexToAddress("0x1111111111111111111111111111111111111111")
 	to := common.HexToAddress("0x2222222222222222222222222222222222222222")
 
-	data, err := transferEvent.Inputs.NonIndexed().Pack(testutils.BigFromStr(t, "5000"))
+	data, err := transferEvent.Inputs.NonIndexed().Pack(testutil.BigFromStr(t, "5000"))
 	if err != nil {
 		t.Fatalf("packing data: %v", err)
 	}
@@ -399,7 +399,7 @@ func TestExtractMetaMorphoEvent_AccrueInterest(t *testing.T) {
 
 	accrueEvent := e.metaMorphoABI.Events["AccrueInterest"]
 
-	data, err := accrueEvent.Inputs.NonIndexed().Pack(testutils.BigFromStr(t, "2000000"), testutils.BigFromStr(t, "100"))
+	data, err := accrueEvent.Inputs.NonIndexed().Pack(testutil.BigFromStr(t, "2000000"), testutil.BigFromStr(t, "100"))
 	if err != nil {
 		t.Fatalf("packing data: %v", err)
 	}
@@ -433,9 +433,9 @@ func TestExtractMetaMorphoEvent_AccrueInterest(t *testing.T) {
 func TestAccrueInterestEvent_ToJSON(t *testing.T) {
 	evt := &AccrueInterestEvent{
 		morphoBlueBase: morphoBlueBase{marketID: [32]byte{0x01}, txHash: "0xabc"},
-		PrevBorrowRate: testutils.BigFromStr(t, "1000"),
-		Interest:       testutils.BigFromStr(t, "500"),
-		FeeShares:      testutils.BigFromStr(t, "10"),
+		PrevBorrowRate: testutil.BigFromStr(t, "1000"),
+		Interest:       testutil.BigFromStr(t, "500"),
+		FeeShares:      testutil.BigFromStr(t, "10"),
 	}
 
 	jsonData, err := evt.ToJSON()
@@ -452,8 +452,8 @@ func TestVaultDepositEvent_ToJSON(t *testing.T) {
 		metaMorphoBase: metaMorphoBase{txHash: "0xdef"},
 		Sender:         common.HexToAddress("0x1111111111111111111111111111111111111111"),
 		Owner:          common.HexToAddress("0x2222222222222222222222222222222222222222"),
-		Assets:         testutils.BigFromStr(t, "1000"),
-		Shares:         testutils.BigFromStr(t, "900"),
+		Assets:         testutil.BigFromStr(t, "1000"),
+		Shares:         testutil.BigFromStr(t, "900"),
 	}
 
 	jsonData, err := evt.ToJSON()
@@ -480,10 +480,10 @@ func TestExtractMetaMorphoEvent_AccrueInterestV2(t *testing.T) {
 
 	// Pack 4 fields: previousTotalAssets, newTotalAssets, performanceFeeShares, managementFeeShares
 	data, err := v2Event.Inputs.NonIndexed().Pack(
-		testutils.BigFromStr(t, "2900000"),
-		testutils.BigFromStr(t, "3000000"),
-		testutils.BigFromStr(t, "200"),
-		testutils.BigFromStr(t, "150"),
+		testutil.BigFromStr(t, "2900000"),
+		testutil.BigFromStr(t, "3000000"),
+		testutil.BigFromStr(t, "200"),
+		testutil.BigFromStr(t, "150"),
 	)
 	if err != nil {
 		t.Fatalf("packing data: %v", err)
@@ -524,10 +524,10 @@ func TestExtractMetaMorphoEvent_AccrueInterestV2(t *testing.T) {
 func TestVaultAccrueInterestEvent_ToJSON_V2(t *testing.T) {
 	evt := &VaultAccrueInterestEvent{
 		metaMorphoBase:      metaMorphoBase{txHash: "0xv2test"},
-		NewTotalAssets:      testutils.BigFromStr(t, "3000000"),
-		FeeShares:           testutils.BigFromStr(t, "200"),
-		PreviousTotalAssets: testutils.BigFromStr(t, "2900000"),
-		ManagementFeeShares: testutils.BigFromStr(t, "150"),
+		NewTotalAssets:      testutil.BigFromStr(t, "3000000"),
+		FeeShares:           testutil.BigFromStr(t, "200"),
+		PreviousTotalAssets: testutil.BigFromStr(t, "2900000"),
+		ManagementFeeShares: testutil.BigFromStr(t, "150"),
 	}
 
 	jsonData, err := evt.ToJSON()
@@ -546,8 +546,8 @@ func TestVaultAccrueInterestEvent_ToJSON_V2(t *testing.T) {
 func TestVaultAccrueInterestEvent_ToJSON_V1(t *testing.T) {
 	evt := &VaultAccrueInterestEvent{
 		metaMorphoBase: metaMorphoBase{txHash: "0xv1test"},
-		NewTotalAssets: testutils.BigFromStr(t, "2000000"),
-		FeeShares:      testutils.BigFromStr(t, "100"),
+		NewTotalAssets: testutil.BigFromStr(t, "2000000"),
+		FeeShares:      testutil.BigFromStr(t, "100"),
 	}
 
 	jsonData, err := evt.ToJSON()

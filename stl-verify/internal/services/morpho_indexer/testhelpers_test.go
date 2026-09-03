@@ -13,7 +13,6 @@ import (
 
 	"github.com/archon-research/stl/stl-verify/internal/domain/entity"
 	"github.com/archon-research/stl/stl-verify/internal/pkg/blockchain/abis"
-	"github.com/archon-research/stl/stl-verify/internal/pkg/testutils"
 	"github.com/archon-research/stl/stl-verify/internal/ports/outbound"
 	"github.com/archon-research/stl/stl-verify/internal/services/shared"
 	"github.com/archon-research/stl/stl-verify/internal/testutil"
@@ -793,7 +792,7 @@ func (h *serviceTestHarness) setupMarketNotInDB() {
 		case 1:
 			// getMarketParams or getMarketState
 			return []outbound.Result{
-				{Success: true, ReturnData: h.packMarketParams(testLoanToken, testCollToken, testOracle, testIrm, testutils.BigFromStr(h.t, "800000000000000000"))},
+				{Success: true, ReturnData: h.packMarketParams(testLoanToken, testCollToken, testOracle, testIrm, testutil.BigFromStr(h.t, "800000000000000000"))},
 			}, nil
 		case 2:
 			// Could be market+position or token metadata.

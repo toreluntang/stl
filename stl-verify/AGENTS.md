@@ -49,14 +49,9 @@ internal/
 - Place tests in the same package with `_test.go` suffix
 - Use table-driven tests for multiple cases
 - Mock outbound ports for unit testing application services
-- Use the in-memory adapter for integration tests
+- Use the `testutil/memory` fakes for unit tests
 
 ## Adding New Features
-
-### New Use Case
-1. Add method to inbound port interface in `ports/inbound/`
-2. Implement the method in `application/`
-3. Add HTTP handler in `adapters/inbound/http/`
 
 ### New External Dependency
 1. Define interface in `ports/outbound/`

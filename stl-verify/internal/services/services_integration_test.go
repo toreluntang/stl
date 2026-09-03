@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/archon-research/stl/stl-verify/internal/adapters/outbound/memory"
 	"github.com/archon-research/stl/stl-verify/internal/adapters/outbound/postgres"
 	"github.com/archon-research/stl/stl-verify/internal/ports/outbound"
 	"github.com/archon-research/stl/stl-verify/internal/services/backfill_gaps"
 	"github.com/archon-research/stl/stl-verify/internal/services/live_data"
 	"github.com/archon-research/stl/stl-verify/internal/testutil"
+	"github.com/archon-research/stl/stl-verify/internal/testutil/memory"
 )
 
 // TestConcurrentLiveAndBackfill is an integration test that verifies

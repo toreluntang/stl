@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/archon-research/stl/stl-verify/internal/adapters/outbound/memory"
 	"github.com/archon-research/stl/stl-verify/internal/ports/outbound"
 	"github.com/archon-research/stl/stl-verify/internal/testutil"
+	"github.com/archon-research/stl/stl-verify/internal/testutil/memory"
 )
 
 // mockStateRepo is a test state repository that can simulate errors.

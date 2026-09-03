@@ -1,5 +1,5 @@
 // Package proxytls builds a TLS config that trusts an additional CA certificate
-// for outbound connections (HTTPS and WebSocket) made from behind a
+// for outbound WebSocket connections made from behind a
 // TLS-intercepting proxy.
 //
 // Such proxies (e.g. Zscaler, corporate firewalls) terminate the upstream TLS

@@ -27,9 +27,8 @@ type Telemetry struct {
 	errorsTotal     metric.Int64Counter
 
 	// Histograms
-	blockDuration   metric.Float64Histogram
-	receiptDuration metric.Float64Histogram
-	rpcDuration     metric.Float64Histogram
+	blockDuration metric.Float64Histogram
+	rpcDuration   metric.Float64Histogram
 
 	// Gauges
 	symbolsMissing metric.Int64Gauge
@@ -112,16 +111,6 @@ func NewTelemetryWithProviders(tp trace.TracerProvider, mp metric.MeterProvider,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("creating blockDuration histogram: %w", err)
-	}
-
-	t.receiptDuration, err = meter.Float64Histogram(
-		"morpho.receipt.duration_seconds",
-		metric.WithDescription("Duration of receipt processing in seconds"),
-		metric.WithUnit("s"),
-		metric.WithExplicitBucketBoundaries(telemetry.SecondsDurationBuckets...),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("creating receiptDuration histogram: %w", err)
 	}
 
 	t.rpcDuration, err = meter.Float64Histogram(
