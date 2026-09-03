@@ -1,5 +1,5 @@
 // Implements the timed block emitter that cycles through stored block templates.
-package mockchain
+package main
 
 import (
 	"crypto/sha256"

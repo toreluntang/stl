@@ -17,7 +17,6 @@ import (
 
 	s3adapter "github.com/archon-research/stl/stl-verify/internal/adapters/outbound/s3"
 	"github.com/archon-research/stl/stl-verify/internal/pkg/lifecycle"
-	"github.com/archon-research/stl/stl-verify/internal/testutil/mockchain"
 )
 
 func main() {
@@ -65,10 +64,10 @@ type serverConfig struct {
 	region     string
 }
 
-// serverAdapter adapts mockchain.Server to the lifecycle.Service interface.
+// serverAdapter adapts Server to the lifecycle.Service interface.
 type serverAdapter struct {
-	srv       *mockchain.Server
-	store     *mockchain.DataStore
+	srv       *Server
+	store     *DataStore
 	adminAddr string
 	addr      string
 	logger    *slog.Logger
@@ -110,7 +109,7 @@ func run(ctx context.Context, logger *slog.Logger, c serverConfig) error {
 		return fmt.Errorf("loading block data: %w", err)
 	}
 
-	srv := mockchain.NewServer(store, c.interval)
+	srv := NewServer(store, c.interval)
 
 	return lifecycle.Run(ctx, logger, &serverAdapter{
 		srv:       srv,
@@ -123,10 +122,10 @@ func run(ctx context.Context, logger *slog.Logger, c serverConfig) error {
 
 // loadStore returns a DataStore populated from S3 when --s3-bucket is set,
 // or from synthetic fixture data otherwise.
-func loadStore(ctx context.Context, logger *slog.Logger, c serverConfig) (*mockchain.DataStore, error) {
+func loadStore(ctx context.Context, logger *slog.Logger, c serverConfig) (*DataStore, error) {
 	if c.s3Bucket == "" {
 		logger.Info("using fixture block data (no --s3-bucket set)")
-		return mockchain.NewFixtureDataStore(), nil
+		return NewFixtureDataStore(), nil
 	}
 
 	logger.Info("loading block data from S3",
@@ -154,7 +153,7 @@ func loadStore(ctx context.Context, logger *slog.Logger, c serverConfig) (*mockc
 
 	reader := s3adapter.NewReaderWithOptions(awsCfg, logger, optFns...)
 
-	store := mockchain.NewDataStore()
+	store := NewDataStore()
 	if err := store.LoadFromS3(ctx, reader, c.s3Bucket, c.s3Prefix); err != nil {
 		return nil, fmt.Errorf("bucket %q prefix %q: %w", c.s3Bucket, c.s3Prefix, err)
 	}

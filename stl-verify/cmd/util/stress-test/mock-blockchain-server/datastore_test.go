@@ -1,4 +1,4 @@
-package mockchain
+package main
 
 import (
 	"context"

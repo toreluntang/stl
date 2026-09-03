@@ -290,7 +290,7 @@ lifecycle:
 | `cmd/workers/` | Long-running SQS consumers — **one message per block** | `oracle-price-indexer`, `morpho-indexer`, `sparklend-indexer`, `raw-data-backup` |
 | `cmd/cronjobs/` | Long-running Temporal workers triggered on a **schedule** | `offchain-price-indexer`, `anchorage-indexer`, `watcher-data-validator` |
 | `cmd/backfillers/` | **One-shot** jobs that fill historical gaps | `oracle-pricing-backfill`, `sparklend-backfill`, `raw-block-bulk-downloader` |
-| `cmd/util/` | Dev tooling (`migrate`, `generate-er`, `cronjob-manifest`, stress-test helpers) | — |
+| `cmd/util/` | Dev tooling (`migrate`, `cronjob-manifest`, stress-test helpers) | — |
 
 If you're adding data acquisition, **pick the category first** — it
 determines the plumbing, deployment shape, and tests you'll write.

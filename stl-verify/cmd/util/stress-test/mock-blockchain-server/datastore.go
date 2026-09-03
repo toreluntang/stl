@@ -1,5 +1,5 @@
 // Implements the thread-safe in-memory store for block headers and associated data (block, receipts, traces, blobs).
-package mockchain
+package main
 
 import (
 	"context"

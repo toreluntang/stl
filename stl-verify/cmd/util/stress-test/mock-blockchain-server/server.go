@@ -1,5 +1,5 @@
 // Wires DataStore, wsHandler, httpHandler, and Replayer into a single TCP server.
-package mockchain
+package main
 
 import (
 	"context"

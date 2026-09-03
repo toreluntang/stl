@@ -8,7 +8,7 @@
 //   - POST /reorg        — trigger a chain reorg (query: ?depth=N)
 //   - POST /disconnect   — disconnect the active WebSocket client
 //   - POST /error        — set error injection mode (body: {"mode": "none"|"429"|"500"|"timeout"|"once429"|"once500"})
-package mockchain
+package main
 
 import (
 	"encoding/json"
