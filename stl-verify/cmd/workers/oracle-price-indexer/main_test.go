@@ -25,6 +25,7 @@ func TestParseConfig(t *testing.T) {
 				"ALCHEMY_HTTP_URL": "https://eth.example.com",
 				"S3_BUCKET":        "stl-sentinelstaging-ethereum-raw",
 				"DEPLOY_ENV":       "staging",
+				"CHAIN_ID":         "1",
 			},
 			wantCfg: cliConfig{
 				queueURL:           "https://sqs.us-east-1.amazonaws.com/123/my-queue",
@@ -45,6 +46,7 @@ func TestParseConfig(t *testing.T) {
 				"ALCHEMY_API_KEY":   "test-key",
 				"S3_BUCKET":         "stl-sentinelstaging-ethereum-raw",
 				"DEPLOY_ENV":        "staging",
+				"CHAIN_ID":          "1",
 			},
 			wantCfg: cliConfig{
 				queueURL:           "https://sqs.us-east-1.amazonaws.com/123/env-queue",
@@ -65,6 +67,7 @@ func TestParseConfig(t *testing.T) {
 				"ALCHEMY_API_KEY": "test-key",
 				"S3_BUCKET":       "stl-sentinelstaging-ethereum-raw",
 				"DEPLOY_ENV":      "staging",
+				"CHAIN_ID":        "1",
 			},
 			wantCfg: cliConfig{
 				queueURL:           "https://sqs.us-east-1.amazonaws.com/123/my-queue",
@@ -108,6 +111,7 @@ func TestParseConfig(t *testing.T) {
 				"ALCHEMY_API_KEY":   "test-key",
 				"S3_BUCKET":         "stl-sentinelstaging-ethereum-raw",
 				"DEPLOY_ENV":        "staging",
+				"CHAIN_ID":          "1",
 			},
 			wantCfg: cliConfig{
 				queueURL:           "https://sqs.us-east-1.amazonaws.com/123/cli-queue",
@@ -130,6 +134,7 @@ func TestParseConfig(t *testing.T) {
 				"ALCHEMY_API_KEY":   "test-key",
 				"S3_BUCKET":         "stl-sentinelstaging-ethereum-raw",
 				"DEPLOY_ENV":        "staging",
+				"CHAIN_ID":          "1",
 			},
 			wantCfg: cliConfig{
 				queueURL:           "https://sqs.us-east-1.amazonaws.com/123/env-queue",
@@ -183,6 +188,20 @@ func TestParseConfig(t *testing.T) {
 				"S3_BUCKET":       "stl-sentinelstaging-ethereum-raw",
 			},
 			wantError: "DEPLOY_ENV",
+		},
+		{
+			name: "missing CHAIN_ID",
+			args: []string{
+				"-queue", "https://sqs.us-east-1.amazonaws.com/123/my-queue",
+				"-db", "postgres://localhost/db",
+				"-redis", "redis.example.com:6379",
+			},
+			envVars: map[string]string{
+				"ALCHEMY_API_KEY": "test-key",
+				"S3_BUCKET":       "stl-sentinelstaging-ethereum-raw",
+				"DEPLOY_ENV":      "staging",
+			},
+			wantError: "CHAIN_ID environment variable is required",
 		},
 		{
 			name: "invalid CHAIN_ID",

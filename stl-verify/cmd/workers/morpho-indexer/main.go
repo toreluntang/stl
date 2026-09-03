@@ -131,7 +131,10 @@ func parseConfig(args []string) (cliConfig, error) {
 		cfg.visibilityTimeout = v
 	}
 
-	chainIDStr := env.Get("CHAIN_ID", "1")
+	chainIDStr := env.Get("CHAIN_ID", "")
+	if chainIDStr == "" {
+		return cliConfig{}, fmt.Errorf("CHAIN_ID environment variable is required (no silent default to mainnet)")
+	}
 	chainID, err := strconv.ParseInt(chainIDStr, 10, 64)
 	if err != nil {
 		return cliConfig{}, fmt.Errorf("parsing CHAIN_ID %q: %w", chainIDStr, err)

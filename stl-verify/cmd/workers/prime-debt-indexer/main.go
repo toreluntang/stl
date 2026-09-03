@@ -71,6 +71,20 @@ func maskRPCURL(rawURL string) string {
 	return fmt.Sprintf("%s://%s/***", u.Scheme, u.Host)
 }
 
+// parseChainID reads the required CHAIN_ID env var. A missing var is a hard
+// error: silently defaulting to mainnet would index the wrong chain.
+func parseChainID() (int64, error) {
+	chainIDStr := env.Get("CHAIN_ID", "")
+	if chainIDStr == "" {
+		return 0, fmt.Errorf("CHAIN_ID environment variable is required (no silent default to mainnet)")
+	}
+	chainID, err := strconv.ParseInt(chainIDStr, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("parsing CHAIN_ID %q: %w", chainIDStr, err)
+	}
+	return chainID, nil
+}
+
 // run is the entry point for the prime-debt-indexer.
 // It is extracted from main() to allow integration testing.
 func run(ctx context.Context, args []string) error {
@@ -97,10 +111,9 @@ func run(ctx context.Context, args []string) error {
 		return fmt.Errorf("queue URL not provided (use -queue flag or AWS_SQS_QUEUE_URL env var)")
 	}
 
-	chainIDStr := env.Get("CHAIN_ID", "1")
-	chainID, err := strconv.ParseInt(chainIDStr, 10, 64)
+	chainID, err := parseChainID()
 	if err != nil {
-		return fmt.Errorf("parsing CHAIN_ID %q: %w", chainIDStr, err)
+		return err
 	}
 
 	if waitTimeStr := env.Get("SQS_WAIT_TIME", ""); waitTimeStr != "" {

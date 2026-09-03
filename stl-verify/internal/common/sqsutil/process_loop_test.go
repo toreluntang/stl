@@ -221,6 +221,52 @@ func TestProcessMessages_ChainIDMatch_Proceeds(t *testing.T) {
 	}
 }
 
+func TestProcessMessages_SNSEnvelope_NotDeletedAsForeignChain(t *testing.T) {
+	// An SNS notification envelope (subscription without RawMessageDelivery)
+	// decodes to an all-zero event. It must surface as a decode error and be
+	// left for redelivery — never deleted as a foreign-chain message.
+	envelope := `{"Type":"Notification","Message":"{\"chainId\":1}","Timestamp":"2024-01-01T00:00:00Z"}`
+	consumer := &mockConsumer{
+		batches: [][]outbound.SQSMessage{{
+			{MessageID: "1", ReceiptHandle: "h1", Body: envelope},
+		}},
+	}
+
+	handler := func(_ context.Context, e outbound.BlockEvent) error {
+		t.Fatal("handler should not be called for an SNS envelope")
+		return nil
+	}
+
+	err := ProcessMessages(context.Background(), testConfig(consumer), handler)
+	if err == nil {
+		t.Fatal("expected error for SNS envelope")
+	}
+	if len(consumer.deletedHandles) != 0 {
+		t.Errorf("expected envelope left undeleted, got deletes: %v", consumer.deletedHandles)
+	}
+}
+
+func TestProcessMessages_ZeroEvent_NotDeletedAsForeignChain(t *testing.T) {
+	consumer := &mockConsumer{
+		batches: [][]outbound.SQSMessage{{
+			{MessageID: "1", ReceiptHandle: "h1", Body: `{}`},
+		}},
+	}
+
+	handler := func(_ context.Context, e outbound.BlockEvent) error {
+		t.Fatal("handler should not be called for a zero event")
+		return nil
+	}
+
+	err := ProcessMessages(context.Background(), testConfig(consumer), handler)
+	if err == nil {
+		t.Fatal("expected error for zero event")
+	}
+	if len(consumer.deletedHandles) != 0 {
+		t.Errorf("expected zero event left undeleted, got deletes: %v", consumer.deletedHandles)
+	}
+}
+
 func TestConfig_Validate(t *testing.T) {
 	t.Run("zero chain ID returns error", func(t *testing.T) {
 		cfg := Config{ChainID: 0}
