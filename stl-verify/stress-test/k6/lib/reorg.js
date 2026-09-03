@@ -28,7 +28,7 @@ export const reorgErrors = new Counter('reorg_errors');
  */
 export function createReorgRunner(adminURL) {
   const enabled = !!__ENV.REORG;
-  const MAX_REORG_DEPTH = 64; // must match maxReorgDepth in internal/testutil/mockchain/server.go
+  const MAX_REORG_DEPTH = 64; // must match maxReorgDepth in cmd/util/stress-test/mock-blockchain-server/server.go
   const depth = parseInt(__ENV.REORG_DEPTH || '5', 10);
   if (isNaN(depth) || depth <= 0 || depth > MAX_REORG_DEPTH) {
     throw new Error(`REORG_DEPTH must be between 1 and ${MAX_REORG_DEPTH}, got: ${__ENV.REORG_DEPTH}`);

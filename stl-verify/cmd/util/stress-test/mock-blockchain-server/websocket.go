@@ -1,5 +1,5 @@
 // Implements the WebSocket JSON-RPC handler for eth_subscribe (newHeads) and block broadcast.
-package mockchain
+package main
 
 import (
 	"encoding/json"

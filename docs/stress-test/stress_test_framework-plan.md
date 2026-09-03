@@ -128,7 +128,7 @@ Since the mock server replays renumbered blocks that don't exist on-chain, the w
   - README.md
 - stl-verify/cmd/mock-blockchain-server/main.go — Binary entry point
 - stl-verify/cmd/stress-data-export/main.go — Data exporter entry point
-- stl-verify/internal/testutil/mockchain/ — Mock server package (extends existing testutil patterns)
+- stl-verify/cmd/util/stress-test/mock-blockchain-server/ — Mock server package
   - server.go — Top-level server (wires WS + HTTP + Admin)
   - websocket.go — `eth_subscribe`, notifications, keepalive
   - jsonrpc.go — HTTP JSON-RPC handler (builds on testutil/ethrpc.go patterns)

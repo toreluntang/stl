@@ -1,7 +1,7 @@
 // httprpc.go implements the HTTP JSON-RPC handler for eth_getBlockByHash, eth_getBlockByNumber,
 // eth_blockNumber, eth_getBlockReceipts, trace_block, and eth_getBlobSidecars.
 // Supports both single and batch requests, and both hash and block-number params.
-package mockchain
+package main
 
 import (
 	"encoding/json"
