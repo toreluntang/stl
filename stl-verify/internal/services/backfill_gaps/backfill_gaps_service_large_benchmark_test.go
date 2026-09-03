@@ -20,10 +20,10 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 
 	"github.com/archon-research/stl/stl-verify/db/migrator"
-	"github.com/archon-research/stl/stl-verify/internal/adapters/outbound/memory"
 	"github.com/archon-research/stl/stl-verify/internal/adapters/outbound/postgres"
 	"github.com/archon-research/stl/stl-verify/internal/ports/outbound"
 	"github.com/archon-research/stl/stl-verify/internal/testutil"
+	"github.com/archon-research/stl/stl-verify/internal/testutil/memory"
 )
 
 const (

@@ -34,7 +34,6 @@ import (
 	"time"
 
 	"github.com/archon-research/stl/stl-verify/internal/adapters/outbound/alchemy"
-	"github.com/archon-research/stl/stl-verify/internal/adapters/outbound/memory"
 	"github.com/archon-research/stl/stl-verify/internal/adapters/outbound/postgres"
 	"github.com/archon-research/stl/stl-verify/internal/pkg/rpcutil"
 	"github.com/archon-research/stl/stl-verify/internal/ports/outbound"
@@ -42,6 +41,7 @@ import (
 	"github.com/archon-research/stl/stl-verify/internal/services/live_data"
 	"github.com/archon-research/stl/stl-verify/internal/services/shared"
 	"github.com/archon-research/stl/stl-verify/internal/testutil"
+	"github.com/archon-research/stl/stl-verify/internal/testutil/memory"
 )
 
 // ---------------------------------------------------------------------------
